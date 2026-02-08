@@ -1,10 +1,17 @@
 "use client"; // 這行告訴 Next.js 這是要在瀏覽器執行的互動頁面
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Users, Calculator, Plane, ArrowRight } from 'lucide-react';
 
 export default function Home() {
   // 這裡就像 Python 的變數，但當它們改變時，畫面會自動更新
+  const router = useRouter();
+
+const handleSearch = () => {
+  // 把使用者選的參數帶到網址上
+  router.push(`/result?dest=${destination}&days=${days}&adults=${adults}`);
+};
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [days, setDays] = useState(3);
@@ -108,7 +115,8 @@ export default function Home() {
         </div>
 
         {/* 4. 執行按鈕 */}
-        <button className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-lg">
+        <button onClick={handleSearch}
+        className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-lg">
           <Calculator size={20} />
           開始比價 (受到傷害)
           <ArrowRight size={20} />
