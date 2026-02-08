@@ -4,34 +4,81 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plane, Home, AlertTriangle } from 'lucide-react';
 
+// 定義一個資料庫，模擬 API 回傳的資料
+const DATABASE = {
+  kenting: {
+    name: "屏東墾丁",
+    pricePerNight: 8500, // 連假盤子價
+    transport: 3000,     // 高鐵+墾丁快線
+    abroadTarget: "沖繩",
+    abroadPrice: 3500,   // 沖繩平價住宿
+    flight: 9000         // 廉航機票
+  },
+  jiaoxi: {
+    name: "宜蘭礁溪",
+    pricePerNight: 12000, // 溫泉季天價
+    transport: 1500,      // 火車/客運
+    abroadTarget: "日本九州", // 溫泉對決
+    abroadPrice: 4000,
+    flight: 11000
+  },
+  sunmoonlake: {
+    name: "南投日月潭",
+    pricePerNight: 15000, // 湖景房天價
+    transport: 2000,
+    abroadTarget: "越南峴港", // 湖景 vs 海景
+    abroadPrice: 3000,    // 五星級飯店
+    flight: 8000
+  },
+  alishan: {
+    name: "嘉義阿里山",
+    pricePerNight: 9500,  // 櫻花季
+    transport: 2500,
+    abroadTarget: "韓國釜山",
+    abroadPrice: 2800,
+    flight: 8500
+  },
+  tainan: {
+    name: "台南古都",
+    pricePerNight: 6500,  // 老宅民宿漲價
+    transport: 2700,      // 高鐵
+    abroadTarget: "泰國曼谷", // 美食之都對決
+    abroadPrice: 2000,
+    flight: 9500
+  }
+};
+
+// 為了 TypeScript 不報錯，定義一下型別 (Optional)
+type DestinationKey = keyof typeof DATABASE;
+
 export default function ResultPage() {
   const searchParams = useSearchParams();
-  const destination = searchParams.get('dest') || '墾丁';
+  
+  // 1. 抓取網址參數，並確保有預設值
+  const rawDest = searchParams.get('dest') || 'kenting';
   const days = Number(searchParams.get('days')) || 3;
   const adults = Number(searchParams.get('adults')) || 2;
+  const children = Number(searchParams.get('children')) || 0; // 預留之後用
 
-  // --- 這裡是為了 Demo 先寫死的假邏輯 (之後會換成真 API) ---
-  // 假設國旅平均一晚房價 (連假盤子價)
-  const domesticPricePerNight = 8500; 
-  // 假設國內交通 (高鐵+租車)
-  const domesticTransport = 3000 * adults;
-  
-  // 計算國旅總花費
+  // 2. 從資料庫撈資料 (如果找不到就預設用墾丁)
+  const destKey = (DATABASE[rawDest as DestinationKey] ? rawDest : 'kenting') as DestinationKey;
+  const data = DATABASE[destKey];
+
+  // 3. 開始計算 (使用資料庫裡的數字)
+  // 國內
+  const domesticPricePerNight = data.pricePerNight;
+  const domesticTransport = data.transport * adults;
   const totalDomestic = (domesticPricePerNight * days) + domesticTransport;
 
-  // 對照組：沖繩
-  // 假設沖繩機票
-  const flightPrice = 9000;
-  // 假設沖繩住宿 (CP值高)
-  const abroadPricePerNight = 3500;
-  
-  // 計算出國總花費
+  // 國外 (對照組)
+  const flightPrice = data.flight;
+  const abroadPricePerNight = data.abroadPrice;
   const totalAbroad = (flightPrice * adults) + (abroadPricePerNight * days);
   
-  // 價差 (正數代表出國比較貴，負數代表出國比較便宜)
   const diff = totalAbroad - totalDomestic;
   const isAbroadCheaper = diff < 0;
 
+  // ... 後面的 return HTML 不用動太多，只要把顯示變數改一下 ...
   return (
     <main className="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center">
       
@@ -52,7 +99,7 @@ export default function ResultPage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-200 mb-2 flex items-center gap-2">
             <Home className="text-red-500" /> 
-            {destination} {days} 晚
+            {data.name} {days} 晚
           </h2>
           <div className="space-y-4 my-6">
             <div className="flex justify-between text-slate-400">
@@ -86,7 +133,7 @@ export default function ResultPage() {
           </div>
           <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
             <Plane className="text-blue-400" /> 
-            日本沖繩 {days} 晚
+            {data.abroadTarget} {days} 晚
           </h2>
            <div className="space-y-4 my-6">
             <div className="flex justify-between text-slate-300">
@@ -127,7 +174,7 @@ export default function ResultPage() {
       {/* CTA 按鈕 */}
       <div className="mt-12 flex gap-4">
          <button className="bg-white text-slate-900 font-bold py-3 px-8 rounded-full hover:bg-slate-200 transition-colors">
-            查看沖繩機票
+            查看{data.abroadTarget}機票
          </button>
          <button className="bg-transparent border border-slate-600 text-slate-300 font-bold py-3 px-8 rounded-full hover:bg-slate-800 transition-colors">
             截圖分享 (讓朋友生氣)
