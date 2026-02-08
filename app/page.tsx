@@ -9,8 +9,7 @@ export default function Home() {
   const router = useRouter();
 
 const handleSearch = () => {
-  // 把使用者選的參數帶到網址上
-  router.push(`/result?dest=${destination}&days=${days}&adults=${adults}`);
+  router.push(`/result?dest=${destination}&days=${days}&adults=${adults}&children=${children}`);
 };
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
