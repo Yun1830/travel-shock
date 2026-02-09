@@ -47,6 +47,7 @@ const handleSearch = () => {
             <MapPin size={16} /> 台灣目的地
           </label>
           <select 
+            suppressHydrationWarning
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
