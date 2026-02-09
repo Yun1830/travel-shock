@@ -128,16 +128,28 @@ function ResultContent() {
 
   const data = (DATABASE[rawDest as DestinationKey] || DATABASE.kenting);
   
-  // 價格計算
+  // 1. 假日判斷邏輯
+  const startDate = new Date(dateParam);
+  const dayOfWeek = startDate.getDay(); // 0=週日, 5=週五, 6=週六
+  const isWeekend = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0;
+
+  // 2. 加價倍率：國旅週末貴 1.5 倍，出國貴 1.2 倍
+  const domesticMultiplier = isWeekend ? 1.5 : 1.0;
+  const abroadMultiplier = isWeekend ? 1.2 : 1.0;
+
+  // 3. 價格計算
   const flightPrice = FLIGHT_PRICES[data.region]?.[departure] || 9000;
   const departureNames: Record<string, string> = { taipei: '台北', taichung: '台中', tainan: '台南', kaohsiung: '高雄' };
 
-  const domesticTotal = (data.pricePerNight * days) + (data.childExtra * children * days) + (data.transport * adults);
-  const abroadTotal = (flightPrice * (adults + children * 0.8)) + (data.abroadPrice * days); 
-  const diff = abroadTotal - domesticTotal; // 如果是正的，代表出國比較貴
+  // 國內總價 (乘上假日倍率)
+  const domesticTotal = (data.pricePerNight * domesticMultiplier * days) + (data.childExtra * domesticMultiplier * children * days) + (data.transport * adults);
+  
+  // 國外總價 (機票乘上假日倍率)
+  const abroadTotal = (flightPrice * abroadMultiplier * (adults + children * 0.8)) + (data.abroadPrice * days); 
+  
+  const diff = abroadTotal - domesticTotal; 
 
-  // Deep Link
-  const startDate = new Date(dateParam);
+  // Deep Link 日期計算
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + days);
   const formatDate = (date: Date) => {
@@ -151,22 +163,15 @@ function ResultContent() {
   const getKKdayLink = (keyword: string) => `https://www.kkday.com/zh-tw/product/productlist?keyword=${encodeURIComponent(keyword)}&cid=${AFFILIATE_CONFIG.KKDAY_MSCID}`;
   const getKlookSearchLink = (keyword: string) => `https://www.klook.com/zh-TW/search/?query=${encodeURIComponent(keyword)}&aid=${AFFILIATE_CONFIG.KLOOK_AID}`;
 
-  // --- 關鍵修正：依據價差動態產生文案 ---
+  // 4. 動態文案
   const getVerdictMessage = () => {
-    if (diff < 0) {
-      // 情況1: 出國真的比較便宜
-      return "快訂機票吧，出國竟然還比較便宜！";
-    } else if (diff < 5000) {
-      // 情況2: 出國貴一點點 (5000元以內)
-      return `只差 $${diff.toLocaleString()}，捏一下就出國了，不考慮嗎？`;
-    } else {
-      // 情況3: 國旅便宜很多 (例如全家出遊機票太貴)
-      return `好吧國旅便宜 $${diff.toLocaleString()}... 但你確定要花錢買罪受？`;
-    }
+    if (diff < 0) return "快訂機票吧，出國竟然還比較便宜！";
+    if (diff < 5000) return `只差 $${diff.toLocaleString()}，捏一下就出國了，不考慮嗎？`;
+    return `好吧國旅便宜 $${diff.toLocaleString()}... 但你確定要花錢買罪受？`;
   };
 
   const resultMessage = getVerdictMessage();
-  const shareText = `【國旅警報】去${data.name}${days}天要 NT$ ${domesticTotal.toLocaleString()}。去${data.abroadTarget}${diff < 0 ? '還比較便宜' : `只差 $${diff.toLocaleString()}`}！${resultMessage} ${data.roast}`;
+  const shareText = `【國旅警報】${dateParam} 去${data.name}${days}天要 NT$ ${domesticTotal.toLocaleString()}。去${data.abroadTarget}${diff < 0 ? '還比較便宜' : `只差 $${diff.toLocaleString()}`}！${resultMessage} ${data.roast}`;
   
   const handleShare = async () => {
     const shareData = { title: '國旅憤怒計算機', text: shareText, url: window.location.href };
@@ -182,13 +187,23 @@ function ResultContent() {
   return (
     <div className="w-full max-w-4xl space-y-8">
       <div className="grid md:grid-cols-2 gap-8 relative">
-        {/* 國內 */}
-        <div className="bg-slate-900 border border-red-500/30 rounded-2xl p-6 relative">
-          <div className="text-red-500 font-bold mb-2">● 國旅盤子模式</div>
+        {/* 國內卡片 */}
+        <div className="bg-slate-900 border border-red-500/30 rounded-2xl p-6 relative overflow-hidden">
+          
+          {/* 🔥 假日警告標籤 (這裡加回去了！) */}
+          {isWeekend && (
+            <div className="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded animate-pulse z-10 shadow-lg shadow-red-500/50">
+              🔥 週末盤子價 (+50%)
+            </div>
+          )}
+
+          <div className="text-red-500 font-bold mb-2 flex items-center gap-2">
+            ● 國旅盤子模式 <span className="text-xs text-slate-500">({dateParam})</span>
+          </div>
           <h2 className="text-3xl font-bold mb-4">{data.name}</h2>
           <div className="space-y-2 text-slate-400">
-            <div className="flex justify-between"><span>住宿 ({days}晚)</span><span>${(data.pricePerNight * days).toLocaleString()}</span></div>
-            {children > 0 && <div className="flex justify-between text-red-400"><span>兒童佔床加錢</span><span>+${(data.childExtra * children * days).toLocaleString()}</span></div>}
+            <div className="flex justify-between"><span>住宿 ({days}晚)</span><span>${(data.pricePerNight * domesticMultiplier * days).toLocaleString()}</span></div>
+            {children > 0 && <div className="flex justify-between text-red-400"><span>兒童佔床加錢</span><span>+${(data.childExtra * domesticMultiplier * children * days).toLocaleString()}</span></div>}
             <div className="flex justify-between"><span>交通 ({adults}人)</span><span>${(data.transport * adults).toLocaleString()}</span></div>
             <div className="flex justify-between border-t border-slate-800 pt-2 mt-2 text-xl font-bold text-white">
               <span>總計</span><span>NT$ {domesticTotal.toLocaleString()}</span>
@@ -196,7 +211,7 @@ function ResultContent() {
           </div>
         </div>
 
-        {/* 國外 */}
+        {/* 國外卡片 */}
         <div className="bg-gradient-to-br from-blue-900/40 to-slate-900 border border-blue-500/30 rounded-2xl p-6 relative">
           <ExchangeRateBadge currency={data.currency} />
           <div className="text-blue-400 font-bold mb-2">● 聰明出國模式</div>
@@ -204,7 +219,7 @@ function ResultContent() {
           <div className="space-y-2 text-slate-300">
             <div className="flex justify-between">
               <span>機票 ({departureNames[departure]} → {adults + children}人)</span>
-              <span>${(flightPrice * (adults + children * 0.8)).toLocaleString()}</span>
+              <span>${(flightPrice * abroadMultiplier * (adults + children * 0.8)).toLocaleString()}</span>
             </div>
             <div className="flex justify-between"><span>住宿 ({days}晚)</span><span>${(data.abroadPrice * days).toLocaleString()}</span></div>
             <div className="flex justify-between border-t border-slate-800 pt-2 mt-2 text-xl font-bold text-white">
@@ -215,7 +230,7 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 導購按鈕 */}
+      {/* 導購與分享區塊 (維持不變) */}
       <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-around gap-6">
         <div className="flex flex-col items-center gap-3 w-full">
            <span className="text-blue-400 font-bold text-sm tracking-wider uppercase">🏆 CP值最高方案</span>
@@ -244,7 +259,6 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 修正後的分享與提示區 */}
       <div className="flex flex-col items-center gap-4 py-8">
         <div className="text-2xl font-bold text-yellow-500 animate-bounce text-center px-4">
           {resultMessage}
