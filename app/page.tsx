@@ -47,16 +47,22 @@ const handleSearch = () => {
             <MapPin size={16} /> 台灣目的地
           </label>
           <select 
-            suppressHydrationWarning
+            suppressHydrationWarning 
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
           >
-            <option value="jiaoxi">宜蘭礁溪 (溫泉季)</option>
+            {/* 原本的 */}
             <option value="kenting">屏東墾丁 (大街盤子價)</option>
+            <option value="jiaoxi">宜蘭礁溪 (溫泉季)</option>
             <option value="sunmoonlake">日月潭 (湖景第一排)</option>
             <option value="alishan">阿里山 (櫻花季)</option>
             <option value="tainan">台南 (古都連假)</option>
+            
+            {/* 新增的 */}
+            <option value="penghu">澎湖 (花火節)</option>
+            <option value="hualien">花蓮 (太魯閣)</option>
+            <option value="xinyi">台北信義區 (跨年價)</option>
           </select>
         </div>
 
