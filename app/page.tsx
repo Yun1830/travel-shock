@@ -60,22 +60,39 @@ const handleSearch = () => {
         </div>
 
         {/* 2. 日期與天數 */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {/* 左邊：日期 */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2 flex items-center gap-2">
               <Calendar size={16} /> 出發日期
             </label>
-            <input 
-              type="date" 
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
-            />
+            <div className="relative">
+              <input 
+                type="date" 
+                className="w-full h-12 bg-slate-950 border border-slate-800 rounded-lg px-3 text-white focus:ring-2 focus:ring-red-500 focus:outline-none appearance-none"
+              />
+            </div>
           </div>
+
+          {/* 右邊：天數 (強制與左邊一樣高) */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">天數</label>
-            <div className="flex items-center bg-slate-950 rounded-lg border border-slate-800">
-              <button onClick={() => setDays(Math.max(1, days - 1))} className="p-3 hover:text-red-400">-</button>
-              <span className="flex-1 text-center font-bold">{days} 晚</span>
-              <button onClick={() => setDays(days + 1)} className="p-3 hover:text-red-400">+</button>
+            <div className="flex items-center h-12 w-full bg-slate-950 rounded-lg border border-slate-800 overflow-hidden">
+              <button 
+                onClick={() => setDays(Math.max(1, days - 1))} 
+                className="h-full px-3 hover:bg-slate-800 hover:text-red-400 transition-colors flex items-center justify-center border-r border-slate-800/50"
+              >
+                -
+              </button>
+              <span className="flex-1 text-center font-bold text-white flex items-center justify-center h-full">
+                {days} 晚
+              </span>
+              <button 
+                onClick={() => setDays(days + 1)} 
+                className="h-full px-3 hover:bg-slate-800 hover:text-red-400 transition-colors flex items-center justify-center border-l border-slate-800/50"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
